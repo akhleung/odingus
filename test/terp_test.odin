@@ -267,13 +267,13 @@ test_terp_update_many_random :: proc(t: ^testing.T) {
 	durations : [num_targets]f32
 	eases: [num_targets]ease.Ease
 
-	// create a large number of terps of random targets, durations, and easing functions
+	// create a large number of terps with random targets, durations, and easing functions
 	for i := 0; i < num_targets; i += 1 {
 		targets[i] = f32(rand.int_range(1, 10))
 		starts[i] = targets[i]
 		ends[i] = f32(rand.int_range(20, 30))
 		durations[i] =f32(rand.int_range(4, 8))
-		eases[i] = ease.Ease(rand.int_max(int(ease.Ease.Bounce_In_Out)))
+		eases[i] = rand.choice_enum(ease.Ease)
 		terp.terp_to(
 			&terps,
 			&targets[i],
