@@ -246,6 +246,8 @@ test_terp_update_many_random :: proc(t: ^testing.T) {
 	ends: [num_targets]f32
 	durations : [num_targets]f32
 	eases: [num_targets]ease.Ease
+	expected_targets : map[^f32]f32
+	defer delete(expected_targets)
 
 	// create a large number of terps with random targets, durations, and easing functions
 	for i in 0 ..< num_targets {
@@ -261,12 +263,13 @@ test_terp_update_many_random :: proc(t: ^testing.T) {
 			durations[i],
 			easing = eases[i],
 		)
+		expected_targets[&targets[i]] = linalg.lerp(starts[i], ends[i], ease.ease(eases[i], f32(1)))
 	}
 
 	// advance them all
 	for _ in 0 ..< elapsed_time * fps do terp.terp_update(&terps, dt)
 
-	// make sure the terp results are consistent with what we can reconstruct from the input parameters
+	// make sure the intermediate terp results are consistent with what we can reconstruct from the input parameters
 	for i in 0 ..< num_targets {
 		terp_i, ok := terp.terp_get(&terps, &targets[i])
 		testing.expect(t, ok)
@@ -279,6 +282,12 @@ test_terp_update_many_random :: proc(t: ^testing.T) {
 		target_i := targets[i]
 		testing.expect(t, near(target_i, expected_value))
 	}
+
+	// finish all the terps and make sure the final terp'ed results match the precalculated expectations
+	for _ in 0 ..< 8 * fps + 1 do terp.terp_update(&terps, dt)
+
+	testing.expect(t, len(terps.terps) == 0)
+	for i in 0 ..< num_targets do testing.expect(t, near(targets[i], expected_targets[&targets[i]]))
 }
 
 @(test)
