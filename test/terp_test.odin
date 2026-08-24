@@ -81,9 +81,9 @@ test_terp_update :: proc(t: ^testing.T) {
 
 	terp.terp_to(&terps, &v1, Vec2{2, 3}, 10)
 	terp.terp_to(&terps, &v2, Vec2{8, 16}, 20)
-	for i := 0; i < 5 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+
+	// run halfway through terp 1, quarter through terp 2
+	for _ in 0 ..< 5 * fps do terp.terp_update(&terps, dt)
 
 	testing.expect_value(t, len(&terps.terps), 2)
 	testing.expect(t, near(v1.x, 1.5))
@@ -91,22 +91,21 @@ test_terp_update :: proc(t: ^testing.T) {
 	testing.expect(t, near(v2.x, 5))
 	testing.expect(t, near(v2.y, 10))
 
-	for i := 0; i < 5 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	// run all the way through terp 1, halfway through terp 2
+	for _ in 0 ..< 5 * fps do terp.terp_update(&terps, dt)
 
 	testing.expect(t, near(v1.x, 2))
 	testing.expect(t, near(v1.y, 3))
 	testing.expect(t, near(v2.x, 6))
 	testing.expect(t, near(v2.y, 12))
 
-	terp.terp_update(&terps, dt) // nudge one more frame so that the first terp finishes
+	// nudge one more frame so that terp 1 finishes
+	terp.terp_update(&terps, dt)
 
 	testing.expect_value(t, len(&terps.terps), 1)
 
-	for i := 0; i < 11 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	// finish terp 2
+	for _ in 0 ..< 11 * fps do terp.terp_update(&terps, dt)
 
 	testing.expect_value(t, len(&terps.terps), 0)
 	testing.expect(t, near(v2.x, 8))
@@ -125,16 +124,12 @@ test_terp_update_with_on_start :: proc(t: ^testing.T) {
 	terp.terp_to(&terps, &v2, Vec2{8, 16}, 20, on_start = on_start)
 
 	// start both terps
-	for i := 0; i < 5 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 5 * fps do terp.terp_update(&terps, dt)
 
 	testing.expect_value(t, started, 2)
 
 	// finish one terp
-	for i := 0; i < 16 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 16 * fps do terp.terp_update(&terps, dt)
 
 	testing.expect_value(t, started, 2)
 }
@@ -151,23 +146,17 @@ test_terp_update_with_on_done :: proc(t: ^testing.T) {
 	terp.terp_to(&terps, &v2, Vec2{8, 16}, 20, on_done = on_done)
 
 	// start both terps; finish neither
-	for i := 0; i < 5 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 5 * fps do terp.terp_update(&terps, dt)
 
 	testing.expect_value(t, done, 0)
 
 	// finish one terp
-	for i := 0; i < 6 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 6 * fps do terp.terp_update(&terps, dt)
 
 	testing.expect_value(t, done, 1)
 
 	// finish both terps
-	for i := 0; i < 10 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 10 * fps do terp.terp_update(&terps, dt)
 
 	testing.expect_value(t, done, 2)
 }
@@ -181,6 +170,7 @@ test_terp_update_with_delays :: proc(t: ^testing.T) {
 
 	terp.terp_to(&terps, &v1, Vec2{2, 3}, 10, 8)
 	terp.terp_to(&terps, &v2, Vec2{8, 16}, 20, 16)
+
 	// expected timeline:
 	//   8s: v1 starts
 	//   16s: v2 starts
@@ -188,9 +178,7 @@ test_terp_update_with_delays :: proc(t: ^testing.T) {
 	//   36s: v2 ends
 
 	// 7s: neither delay elapsed
-	for i := 0; i < 7 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 7 * fps do terp.terp_update(&terps, dt)
 
 	t1, ok1 := terp.terp_get(&terps, &v1)
 	testing.expect(t, ok1)
@@ -202,9 +190,7 @@ test_terp_update_with_delays :: proc(t: ^testing.T) {
 	testing.expect(t, t2.progress == 0)
 
 	// 9s: one delay elapsed
-	for i := 0; i < 2 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 2 * fps do terp.terp_update(&terps, dt)
 
 	t1, ok1 = terp.terp_get(&terps, &v1)
 	testing.expect(t, ok1)
@@ -216,9 +202,7 @@ test_terp_update_with_delays :: proc(t: ^testing.T) {
 	testing.expect(t, t2.progress == 0)
 
 	// 17s: two delays elapsed
-	for i := 0; i < 8 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 8 * fps do terp.terp_update(&terps, dt)
 
 	t1, ok1 = terp.terp_get(&terps, &v1)
 	testing.expect(t, ok1)
@@ -230,9 +214,7 @@ test_terp_update_with_delays :: proc(t: ^testing.T) {
 	testing.expect(t, t2.progress > 0 && t2.progress < 1)
 
 	// 19s: two delays elapsed, one terp done
-	for i := 0; i < 2 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 2 * fps do terp.terp_update(&terps, dt)
 
 	t1, ok1 = terp.terp_get(&terps, &v1)
 	testing.expect(t, !ok1)
@@ -243,9 +225,7 @@ test_terp_update_with_delays :: proc(t: ^testing.T) {
 	testing.expect(t, t2.progress < 1)
 
 	// 37s: two delays elapsed, two terps done
-	for i := 0; i < 18 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< 18 * fps do terp.terp_update(&terps, dt)
 
 	t1, ok1 = terp.terp_get(&terps, &v1)
 	testing.expect(t, !ok1)
@@ -268,7 +248,7 @@ test_terp_update_many_random :: proc(t: ^testing.T) {
 	eases: [num_targets]ease.Ease
 
 	// create a large number of terps with random targets, durations, and easing functions
-	for i := 0; i < num_targets; i += 1 {
+	for i in 0 ..< num_targets {
 		targets[i] = f32(rand.int_range(1, 10))
 		starts[i] = targets[i]
 		ends[i] = f32(rand.int_range(20, 30))
@@ -284,19 +264,15 @@ test_terp_update_many_random :: proc(t: ^testing.T) {
 	}
 
 	// advance them all
-	for i := 0; i < elapsed_time * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	for _ in 0 ..< elapsed_time * fps do terp.terp_update(&terps, dt)
 
 	// make sure the terp results are consistent with what we can reconstruct from the input parameters
-	for i := 0; i < num_targets; i += 1 {
+	for i in 0 ..< num_targets {
 		terp_i, ok := terp.terp_get(&terps, &targets[i])
 		testing.expect(t, ok)
 		expected_progress : f32
-		// sum up the progress in the same way as the update loop, else floating point imprecision will ruin the test
-		for j := 0; j < elapsed_time * fps; j += 1 {
-			expected_progress += dt / durations[i]
-		}
+		// sum up the progress in the same way as the update loop to compensate for floating point imprecision
+		for _ in 0 ..< elapsed_time * fps do expected_progress += dt / durations[i]
 		testing.expect(t, near(terp_i.progress, expected_progress))
 		eased := ease.ease(eases[i], expected_progress)
 		expected_value := linalg.lerp(starts[i], ends[i], eased)
@@ -353,10 +329,9 @@ test_terp_cancel_after_starting :: proc(t: ^testing.T) {
 
 	terp.terp_to(&terps, &v1, Vec2{2, 3}, 10)
 	terp.terp_to(&terps, &v2, Vec2{8, 16}, 20)
-	for i := 0; i < 5 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
 
+	// start both terps, finish neither
+	for _ in 0 ..< 5 * fps do terp.terp_update(&terps, dt)
 	// cancel one terp
 	canceled := terp.terp_cancel(&terps, &v1)
 	t1, ok1 := terp.terp_get(&terps, &v1)
@@ -370,9 +345,8 @@ test_terp_cancel_after_starting :: proc(t: ^testing.T) {
 	testing.expect_value(t, len(&terps.terps), 1)
 	testing.expect_value(t, len(&terps.index), 1)
 
-	for i := 0; i < 5 * fps; i += 1 {
-		terp.terp_update(&terps, dt)
-	}
+	// run the remaining terp, don't finish
+	for _ in 0 ..< 5 * fps do terp.terp_update(&terps, dt)
 	// cancel last terp
 	canceled = terp.terp_cancel(&terps, &v2)
 	t2, ok2 = terp.terp_get(&terps, &v2)
