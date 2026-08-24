@@ -218,7 +218,7 @@ main :: proc() {
 	fmt.println(num_done, "vector eases over", total, "seconds took", timing, "ms")
 
 	terps: terp.Terps(Vec2)
-	terp.terp_reserve(&terps, num_tweens)
+	terp.reserve(&terps, num_tweens)
 
 	fmt.println(
 		"Generating",
@@ -232,15 +232,14 @@ main :: proc() {
 		tx := rand.float32_range(25, 50)
 		ty := rand.float32_range(25, 50)
 		to: Vec2 = {tx, ty}
-		terp.terp_to(
+		terp.to(
 			&terps,
 			&vecs[i],
 			to,
 			f32(rand.int_range(min_dur, max_dur + 1)),
 			f32(rand.int_range(min_dur, max_dur + 1)),
 			.Quadratic_Out,
-			.Forward_Once,
-			count_done,
+			on_done = count_done,
 		)
 	}
 
@@ -248,7 +247,7 @@ main :: proc() {
 	num_done = 0
 	start = time.now()
 	for num_done < num_tweens {
-		terp.terp_update(&terps, dt)
+		terp.update(&terps, dt)
 		total += dt
 	}
 	dur = time.since(start)
