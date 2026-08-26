@@ -1,5 +1,6 @@
 package terp
 
+import "base:runtime"
 import "core:math/ease"
 import "core:math/linalg"
 
@@ -28,8 +29,8 @@ Terps :: struct($T: typeid) {
 }
 
 reserve :: proc(terps: ^Terps($T), size: int) {
-	reserve(&terps.terps, size)
-	reserve(&terps.index, size)
+	runtime.reserve(&terps.terps, size)
+	runtime.reserve(&terps.index, size)
 }
 
 to :: proc(
