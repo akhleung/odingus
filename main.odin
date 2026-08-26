@@ -147,8 +147,6 @@ get_unused_index :: proc(eases: ^[dynamic]Ease($T)) -> (index: u32, ok: bool) {
 
 main :: proc() {
 
-	Vec2 :: linalg.Vector2f32
-
 	num_tweens: int = 500
 	min_dur: int = 1
 	max_dur: int = 1
@@ -180,25 +178,22 @@ main :: proc() {
 
 	fps: f32 = 60
 	dt: f32 = 1 / fps
-	vecs: []Vec2 = make([]Vec2, num_tweens)
-	ep: Ease_Pool(Vec2)
+	nums: []f32 = make([]f32, num_tweens)
+	ep: Ease_Pool(f32)
 
 	ease_pool_init(&ep, num_tweens)
 	fmt.println(
 		"Generating",
 		num_tweens,
-		"vector eases with durations in",
+		"scalar eases with durations in",
 		[]int{min_dur, max_dur},
 	)
 	for i := 0; i < num_tweens; i += 1 {
-		vecs[i].x = rand.float32_range(0, 25)
-		vecs[i].y = rand.float32_range(0, 25)
-		tx := rand.float32_range(25, 50)
-		ty := rand.float32_range(25, 50)
-		to: Vec2 = {tx, ty}
+		nums[i] = rand.float32_range(0, 25)
+		to := rand.float32_range(25, 50)
 		ep.add(
 			&ep,
-			&vecs[i],
+			&nums[i],
 			to,
 			f32(rand.int_range(min_dur, max_dur + 1)),
 			f32(rand.int_range(min_dur, max_dur + 1)),
@@ -215,26 +210,58 @@ main :: proc() {
 	}
 	dur := time.since(start)
 	timing := time.duration_milliseconds(dur)
-	fmt.println(num_done, "vector eases over", total, "seconds took", timing, "ms")
+	fmt.println(num_done, "scalar eases over", total, "seconds took", timing, "ms")
 
-	terps: terp.Terps(Vec2)
+
+	fluxes: ease.Flux_Map(f32)
+
+	fmt.println(
+		"Generating",
+		num_tweens,
+		"scalar fluxes with durations in",
+		[]int{min_dur, max_dur},
+	)
+	for i := 0; i < num_tweens; i += 1 {
+		nums[i] = rand.float32_range(0, 25)
+		to := rand.float32_range(25, 50)
+		flux := ease.flux_to(
+			&fluxes,
+			&nums[i],
+			to,
+			.Quadratic_Out,
+			time.Duration(rand.int_range(min_dur, max_dur + 1)) * time.Second,
+			f64(rand.int_range(min_dur, max_dur + 1)),
+		)
+		flux.on_complete = count_done
+	}
+
+	total = 0
+	num_done = 0
+	start = time.now()
+	for num_done < num_tweens {
+		ease.flux_update(&fluxes, f64(dt))
+		total += dt
+	}
+	dur = time.since(start)
+	timing = time.duration_milliseconds(dur)
+	fmt.println(num_done, "scalar fluxes over", total, "seconds took", timing, "ms")
+
+
+	terps: terp.Terps(f32)
 	terp.reserve(&terps, num_tweens)
 
 	fmt.println(
 		"Generating",
 		num_tweens,
-		"vector terps with durations in",
+		"scalar terps with durations in",
 		[]int{min_dur, max_dur},
 	)
 	for i := 0; i < num_tweens; i += 1 {
-		vecs[i].x = rand.float32_range(0, 25)
-		vecs[i].y = rand.float32_range(0, 25)
-		tx := rand.float32_range(25, 50)
-		ty := rand.float32_range(25, 50)
-		to: Vec2 = {tx, ty}
+		nums[i] = rand.float32_range(0, 25)
+		to := rand.float32_range(25, 50)
 		terp.to(
 			&terps,
-			&vecs[i],
+			&nums[i],
 			to,
 			f32(rand.int_range(min_dur, max_dur + 1)),
 			f32(rand.int_range(min_dur, max_dur + 1)),
@@ -252,5 +279,5 @@ main :: proc() {
 	}
 	dur = time.since(start)
 	timing = time.duration_milliseconds(dur)
-	fmt.println(num_done, "vector terps over", total, "seconds took", timing, "ms")
+	fmt.println(num_done, "scalar terps over", total, "seconds took", timing, "ms")
 }
